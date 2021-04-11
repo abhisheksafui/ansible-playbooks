@@ -1,0 +1,31 @@
+---
+- hosts: bluefield.server.3
+  roles:
+   
+    - role: create-backing-image
+      vars:
+        - pool: default
+        - os_name: ubuntu
+        - os_version: 20.04
+
+    - role: /home/abhi/code/ansible/roles/create-volume
+      vars:
+        - image_size: 25G
+        - image_format: qcow2
+        - image_name: vm-ubuntu-20_04.qcow2
+        - pool: default
+        - backing_vol: ubuntu_20.04_cloudimage.qcow2
+
+    - role: create-vm-cloud-init
+      vars: 
+        - vm_name: vm-ubuntu-20_04
+        - vm_dir: /home/pocuser/abhishek/vm-ubuntu-20_04
+        - vm_ram_size: 8192
+        - vm_vcpus: 8
+        - mgmt_if_name: mgmt
+        - mgmt_if_mac: 02:0d:80:46:01:01
+        - username: abhi
+        - password: abhi123
+        - disk_pool: default
+        - disk_name: vm-ubuntu-20_04.qcow2
+        - network_config_version: 2
