@@ -1,31 +1,46 @@
 ---
-- hosts: bluefield.server.3
-  roles:
-   
-    - role: create-backing-image
-      vars:
-        - pool: default
-        - os_name: ubuntu
-        - os_version: 20.04
+- hosts: localhost
+  vars_files:
+    - vm_vars.yaml
+  
+  tasks:
+    - name: Prepare Volume With Backing Image
+      block:
+        - name: Create Backing Image
+          import_role:
+            name: create-backing-image
+          vars:
+            - pool: "{{volume.pool}}"
+            - os_name: "{{volume.backing_image.name}}"
+            - os_version: "{{volume.backing_image.version}}"   
 
-    - role: /home/abhi/code/ansible/roles/create-volume
-      vars:
-        - image_size: 25G
-        - image_format: qcow2
-        - image_name: vm-ubuntu-20_04.qcow2
-        - pool: default
-        - backing_vol: ubuntu_20.04_cloudimage.qcow2
+        - name: Create Volume with backing image
+          import_role: 
+            name: create-volume
+          vars: 
+            - image_size: "{{volume.size}}"
+            - image_format: qcow2
+            - image_name: "{{name}}.qcow2"
+            - pool: "{{volume.pool}}"
+            - backing_vol: "{{volume.backing_image.name}}_{{volume.backing_image.version}}_cloudimage.qcow2"
 
-    - role: create-vm-cloud-init
-      vars: 
-        - vm_name: vm-ubuntu-20_04
-        - vm_dir: /home/pocuser/abhishek/vm-ubuntu-20_04
-        - vm_ram_size: 8192
-        - vm_vcpus: 8
-        - mgmt_if_name: mgmt
-        - mgmt_if_mac: 02:0d:80:46:01:01
-        - username: abhi
-        - password: abhi123
-        - disk_pool: default
-        - disk_name: vm-ubuntu-20_04.qcow2
-        - network_config_version: 2
+      when: volume.backing_image is defined
+
+    - name: Create VM
+      block: 
+        - name: Create Cloud Init VM
+          import_role:
+            name: create-vm-cloud-init
+          vars:
+            - vm_name: "{{name}}"
+            - vm_dir: "{{dir}}/{{name}}"
+            - vm_ram_size: "{{ram}}"
+            - vm_vcpus: "{{cpus}}"
+            - mgmt_if_name: "{{cloud_init.mgmt_if_name}}"
+            - mgmt_if_mac: "{{cloud_init.mgmt_if_mac}}"
+            - username: "{{cloud_init.username}}"
+            - password: "{{cloud_init.password}}"
+            - disk_pool: "{{volume.pool}}"
+            - disk_name: "{{name}}.qcow2"
+            - network_config_version: "{{cloud_init.network_config_version}}"
+      when: cloud_init is defined

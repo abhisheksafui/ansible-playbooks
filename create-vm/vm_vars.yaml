@@ -1,2 +1,19 @@
 ---
-vm-
+name: debian-1
+dir: /home/pocuser/abhishek/
+ram: 8192
+cpus: 8
+
+volume:
+  pool: default
+  size: 25G
+  backing_image:
+    name: debian
+    version: buster
+
+cloud_init:
+  mgmt_if_name: mgmt
+  mgmt_if_mac: 02:0d:80:47:1e:01
+  username: user
+  password: password
+  network_config_version: 2
